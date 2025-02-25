@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 #this is just a backup in case it didnt work in jupyter
->>>>>>> main
 import os
 import requests
 
@@ -30,8 +27,6 @@ for station_id in weatherstn_ids:
         print(f"Downloaded: {file_name}")
     else:
         print(f"Failed to download: {file_name} (Status Code: {response.status_code})")
-<<<<<<< HEAD
-=======
 
 
 import os
@@ -64,4 +59,3 @@ for station_id in id:
         print(f"Failed to download: {file_name} (Status Code: {response.status_code})")
 
 print(f"Saving to: {local_file_path}")
->>>>>>> main

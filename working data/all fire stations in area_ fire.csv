@@ -1,4 +1,4 @@
-﻿short code,original_Display Value,lat,lon,formatted,name,state
+﻿fire_id,fire_name,lat,lon,formatted,name,state
 AEU,Amador - El Dorado CAL FIRE,38.5429075,-120.5431589,"CAL Fire Amador El Dorado Unit, CA, United States of America",CAL Fire Amador El Dorado Unit,California
 ANF,Angeles National Forest,34.3212706,-117.9614732,"Angeles National Forest, Los Angeles County, CA, United States of America",Angeles National Forest,California
 BRR,Bitter Creek National Wildlife Refuge,34.9364901,-119.3598814,"Bitter Creek National Wildlife Refuge, Kern County, CA, United States of America",Bitter Creek National Wildlife Refuge,California
