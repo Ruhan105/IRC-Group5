@@ -4,7 +4,7 @@ from typing import List
 
 def dist(x, y):
     """Calculate Euclidean distance."""
-    return np.sqrt(x**2 + y**2)
+    return np.sqrt((x[0] - y[0])**2 + (x[1] - y[1])**2)
 
 
 def find_closest(fire_stations: dict, weather_stations: dict) -> List[List[int]]:
