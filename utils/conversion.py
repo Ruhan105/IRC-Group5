@@ -1,5 +1,4 @@
 import numpy as np
-from typing import List
 
 
 def dist(x, y):
@@ -7,7 +6,7 @@ def dist(x, y):
     return np.sqrt((x[0] - y[0])**2 + (x[1] - y[1])**2)
 
 
-def find_closest(fire_stations: dict, weather_stations: dict) -> List[List[int]]:
+def find_closest(fire_stations: dict, weather_stations: dict):
     """
     Find the closest weather station to each fire station.
 
