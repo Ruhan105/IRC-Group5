@@ -18,10 +18,11 @@ class FireModel:
     0 = river (blue)
     1 = flammable land (white)
     2 = fire (red)
+    3 = burnt (orange)
     """
 
-    def __init__(self, grid: np.array):
-        """Initialise the fire model given a grid."""
+    def __init__(self, grid: np.array, params=[0, [0, 0]]):
+        """Initialise the fire model given a grid and wind parameters."""
         self.grid = np.array(grid)
         self.directions = [
             [0, 0],
@@ -35,12 +36,29 @@ class FireModel:
             [1, -1]
             ]
         self.grid_states = []
+        self.params = params
+
+    def wind_affect(self, direction):
+        """
+        Calculate wind affect on probabilities.
+
+        s
+        """
+        # wind_coeff = np.exp(0.1783*velocity)
+        # find weighted mean over each neighbouring pixel 
+        normalised_wind = 1/(1+np.exp(-self.params[0]))
+        a = np.array(direction) / np.linalg.norm(self.params[1])
+        b = np.array(self.params[1]) / np.linalg.norm(self.params[1])
+
+        return normalised_wind * np.dot(a, b)
 
     def model_spread(self) -> int:
         """
         Simulate fire spread using BFS.
 
         Saves snapshots of grid state.
+        params - [windSpeed, direction]
+
         """
         queue = deque()
         rows, cols = len(self.grid), len(self.grid[0])
@@ -60,12 +78,17 @@ class FireModel:
 
             for _ in range(len(queue)):
                 row, col = queue.popleft()
+                self.grid[row][col] = 3
 
                 for direction in self.directions:
                     # randomly chooses whether or not
                     # to spread in this direction
+                    initial = 0.3
 
-                    num = np.random.randint(0, 2)
+                    wind_prob = initial*(1 + self.wind_affect(direction))
+
+                    num = np.random.choice([0, 1], 1,
+                                           p=[1 - wind_prob, wind_prob])
 
                     if num > 0:
                         next_i = row + direction[0]
@@ -85,11 +108,11 @@ class FireModel:
 
     def animate_spread(self, grid_states: List[np.ndarray], save_file: bool):
         """Animate fire spread based on grid snapshots."""
-        cmap = mpl.colors.ListedColormap(['blue', 'white', 'red'])
+        cmap = mpl.colors.ListedColormap(['blue', 'white', 'red', 'orange'])
 
         fig, ax = plt.subplots()
 
-        image = ax.imshow(self.grid, cmap=cmap, vmin=0, vmax=2)
+        image = ax.imshow(self.grid, cmap=cmap, vmin=0, vmax=3)
 
         ax.set_xticks([])
         ax.set_yticks([])
@@ -157,7 +180,7 @@ if __name__ == "__main__":
         arr[i[0]][i[1]] = 0
 
     arr[50][50] = 2
-    test = FireModel(arr)
+    test = FireModel(arr, [100, [1, 0]])
 
     test.model_spread()
     test.animate_spread(test.grid_states, False)
