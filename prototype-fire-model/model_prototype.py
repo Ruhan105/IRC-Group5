@@ -37,6 +37,8 @@ class FireModel:
             ]
         self.grid_states = []
         self.params = params
+        self.steps = 0
+        self.normalised_wind = 1/(1+np.exp(-self.params[0])) 
 
     def wind_affect(self, direction):
         """
@@ -46,11 +48,10 @@ class FireModel:
         """
         # wind_coeff = np.exp(0.1783*velocity)
         # find weighted mean over each neighbouring pixel 
-        normalised_wind = 1/(1+np.exp(-self.params[0]))
         a = np.array(direction) / np.linalg.norm(self.params[1])
         b = np.array(self.params[1]) / np.linalg.norm(self.params[1])
 
-        return normalised_wind * np.dot(a, b)
+        return 0 if self.params[1] == [0,0] else self.normalised_wind * np.dot(a, b)
 
     def model_spread(self) -> int:
         """
@@ -64,6 +65,7 @@ class FireModel:
         rows, cols = len(self.grid), len(self.grid[0])
         land = 0
         self.grid_states = []
+        self.steps = 0
 
         for i in range(rows):
             for j in range(cols):
@@ -103,6 +105,8 @@ class FireModel:
                             queue.append([next_i, next_j])
                             self.grid[next_i][next_j] = 2
                             land -= 1
+
+                            self.steps +=1
 
         self.grid_states.append(deepcopy(self.grid))
 
@@ -204,7 +208,7 @@ if __name__ == "__main__":
 
     states = []
     for i in range(10):
-        test = FireModel(arr, [100, [1, 0]])
+        test = FireModel(arr, [100, [1, 1]])
         test.model_spread()
 
         states.append(test.get_final_state())
