@@ -129,6 +129,8 @@ class FireModel:
         if save_file:
             ani.save('test.gif', writer='pillow', fps=15)
 
+    def get_final_state(self):
+        return self.grid_states[-1]
 
 def sample_objects(n):
     """
@@ -172,6 +174,21 @@ def sample_objects(n):
     return positions
 
 
+
+def fire_heatmap(states):
+    """
+    Generate probability heatmap based on final states.
+    takes an List of np arrays
+    """
+
+    sum_array = np.sum(states, axis=0)
+
+    normalised_arr = sum_array/np.max(sum_array)
+
+    plt.imshow(normalised_arr, cmap="coolwarm", interpolation="nearest")
+
+    plt.show()
+
 if __name__ == "__main__":
 
     arr = np.ones((100, 100))
@@ -180,7 +197,22 @@ if __name__ == "__main__":
         arr[i[0]][i[1]] = 0
 
     arr[50][50] = 2
-    test = FireModel(arr, [100, [1, 0]])
+    test = FireModel(arr, [0, [1, 1]])
 
     test.model_spread()
     test.animate_spread(test.grid_states, False)
+
+    states = []
+    for i in range(10):
+        test = FireModel(arr, [100, [1, 0]])
+        test.model_spread()
+
+        states.append(test.get_final_state())
+    
+    fire_heatmap(states)
+
+
+
+
+#TODO - make a set of samples of fire, create a probability heatmap based on the final spread and compare to actual spread
+# Also need to add temperature, fuel, accurate locations for trees/ rivers. 
