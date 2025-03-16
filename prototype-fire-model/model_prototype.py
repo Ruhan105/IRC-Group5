@@ -99,11 +99,11 @@ class FireModel:
                             next_i][next_j] == 1:
 
                         initial = 0.25
-                        temp = self.temperatures[next_i][next_j]
+                        temp = max(self.temperatures[next_i][next_j], 73)
 
-                        p = min(initial*(1 + self.wind_affect(
+                        p = min(initial*(1 + 0.5*self.wind_affect(
                                     direction)
-                                    )*np.exp(0.3*(temp - 0.4)), 0.9)
+                                    )*np.exp(0.2*(temp - 73)), 0.9)
 
                         # if self.grid[next_i][next_j] == 4:
                         #     p = min(1, 1.5*p)
@@ -222,7 +222,7 @@ def temperature_map(n):
     x, y = np.meshgrid(xgrid, ygrid)  # Create mesh grid
 
     # z = np.abs(np.sin(0.5* np.pi*x)*np.sin(0.5* np.pi*y) + 2*np.cos(1/6 * np.pi*y*x))
-    z = 1/2*np.exp(-(1/2)*(x**2 + y**2)/2)
+    z = 600*np.exp(-(1/2)*(x**2 + y**2)/9)
     normz = z / np.max(z)
     plt.imshow(normz, cmap="coolwarm", interpolation="nearest")
 
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     for i in sample_objects(n):
         grid[i[0]][i[1]] = 4
 
-    generate_boundary(n, grid)
+    # generate_boundary(n, grid)
 
     grid[n//2][n//2] = 2
     test = FireModel(grid, temperatures, [0, [1, 1]])
@@ -262,11 +262,15 @@ if __name__ == "__main__":
     test.animate_spread(test.grid_states, False)
 
     states = []
-    for i in range(20):
-        test = FireModel(grid, temperatures, [20, [1, 1]])
+    for i in range(100):
+        test = FireModel(grid, temperatures, [7.38, [-1, -1]])
         test.model_spread()
 
         states.append(test.get_final_state())
 
     fire_heatmap(states)
 # Also need to add temperature, fuel, accurate locations for trees/ rivers.
+
+# DATE,PRECIPITATION,MAX_TEMP,MIN_TEMP,AVG_WIND_SPEED,FIRE_START_DAY,YEAR,TEMP_RANGE,WIND_TEMP_RATIO,MONTH,SEASON,LAGGED_PRECIPITATION,LAGGED_AVG_WIND_SPEED,DAY_OF_YEAR
+
+#1984-09-10,0.02,83.0,73.0,7.38,True,1984,10.0,0.08891566265060241,9,Fall,0.02,7.318571428571429,254
