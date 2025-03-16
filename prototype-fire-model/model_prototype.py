@@ -21,7 +21,8 @@ class FireModel:
     3 = burnt (orange)
     """
 
-    def __init__(self, grid: np.array, params=[0, [0, 0]]):
+    def __init__(self, grid: np.array,
+                 temperatures: np.array, params=[0, [0, 0]]):
         """Initialise the fire model given a grid and wind parameters."""
         self.grid = np.array(grid)
         self.directions = [
@@ -38,7 +39,8 @@ class FireModel:
         self.grid_states = []
         self.params = params
         self.steps = 0
-        self.normalised_wind = 1/(1+np.exp(-self.params[0])) 
+        self.normalised_wind = 1/(1+np.exp(-self.params[0]))
+        self.temperatures = temperatures
 
     def wind_affect(self, direction):
         """
@@ -47,11 +49,13 @@ class FireModel:
         s
         """
         # wind_coeff = np.exp(0.1783*velocity)
-        # find weighted mean over each neighbouring pixel 
+        # find weighted mean over each neighbouring pixel
         a = np.array(direction) / np.linalg.norm(self.params[1])
         b = np.array(self.params[1]) / np.linalg.norm(self.params[1])
 
-        return 0 if self.params[1] == [0,0] else self.normalised_wind * np.dot(a, b)
+        res = self.normalised_wind * np.dot(a, b)
+
+        return 0 if self.params[1] == [0, 0] else res
 
     def model_spread(self) -> int:
         """
@@ -85,16 +89,18 @@ class FireModel:
                 for direction in self.directions:
                     # randomly chooses whether or not
                     # to spread in this direction
-                    initial = 0.3
 
-                    wind_prob = initial*(1 + self.wind_affect(direction))
+                    next_i = row + direction[0]
+                    next_j = col + direction[1]
+                    initial = 0.4
+
+                    p = initial*(1 + self.wind_affect(
+                                direction))*self.temperatures[next_i][next_j]
 
                     num = np.random.choice([0, 1], 1,
-                                           p=[1 - wind_prob, wind_prob])
+                                           p=[1 - p, p])
 
                     if num > 0:
-                        next_i = row + direction[0]
-                        next_j = col + direction[1]
 
                         if (next_i >= 0 and
                             next_i < rows) and (
@@ -106,7 +112,7 @@ class FireModel:
                             self.grid[next_i][next_j] = 2
                             land -= 1
 
-                            self.steps +=1
+                            self.steps += 1
 
         self.grid_states.append(deepcopy(self.grid))
 
@@ -134,7 +140,9 @@ class FireModel:
             ani.save('test.gif', writer='pillow', fps=15)
 
     def get_final_state(self):
+        """Getter method."""
         return self.grid_states[-1]
+
 
 def sample_objects(n):
     """
@@ -178,13 +186,12 @@ def sample_objects(n):
     return positions
 
 
-
 def fire_heatmap(states):
     """
     Generate probability heatmap based on final states.
+
     takes an List of np arrays
     """
-
     sum_array = np.sum(states, axis=0)
 
     normalised_arr = sum_array/np.max(sum_array)
@@ -193,30 +200,43 @@ def fire_heatmap(states):
 
     plt.show()
 
+
+def temperature_map(n):
+    """Generate temperature grid."""
+    xgrid = np.linspace(-5, 5, n)
+    ygrid = np.linspace(-5, 5, n)
+    x, y = np.meshgrid(xgrid, ygrid)  # Create mesh grid
+
+    z = np.abs(np.exp(-(1/2)*(x**2 + y**2)))
+
+    plt.imshow(z, cmap="coolwarm", interpolation="nearest")
+
+    return z
+
+
 if __name__ == "__main__":
 
-    arr = np.ones((100, 100))
+    n = 100
 
-    for i in sample_objects(100):
-        arr[i[0]][i[1]] = 0
+    grid = np.ones((n, n))
 
-    arr[50][50] = 2
-    test = FireModel(arr, [0, [1, 1]])
+    temperatures = temperature_map(n)
+
+    for i in sample_objects(n):
+        grid[i[0]][i[1]] = 0
+
+    grid[n//2][n//2] = 2
+    test = FireModel(grid, temperatures, [0, [1, 1]])
 
     test.model_spread()
     test.animate_spread(test.grid_states, False)
 
     states = []
     for i in range(10):
-        test = FireModel(arr, [100, [1, 1]])
+        test = FireModel(grid, temperatures, [100, [1, 1]])
         test.model_spread()
 
         states.append(test.get_final_state())
-    
+
     fire_heatmap(states)
-
-
-
-
-#TODO - make a set of samples of fire, create a probability heatmap based on the final spread and compare to actual spread
-# Also need to add temperature, fuel, accurate locations for trees/ rivers. 
+# Also need to add temperature, fuel, accurate locations for trees/ rivers.
