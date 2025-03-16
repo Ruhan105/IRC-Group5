@@ -89,24 +89,25 @@ class FireModel:
                 for direction in self.directions:
                     # randomly chooses whether or not
                     # to spread in this direction
-
                     next_i = row + direction[0]
                     next_j = col + direction[1]
-                    initial = 0.4
 
-                    p = initial*(1 + self.wind_affect(
-                                direction))*self.temperatures[next_i][next_j]
+                    if (next_i >= 0 and
+                        next_i < rows) and (
+                        next_j >= 0 and
+                            next_j < cols) and self.grid[
+                            next_i][next_j] == 1:
 
-                    num = np.random.choice([0, 1], 1,
-                                           p=[1 - p, p])
+                        initial = 0.4
 
-                    if num > 0:
+                        p = initial*(1 + self.wind_affect(
+                                    direction)
+                                    )*self.temperatures[next_i][next_j]
 
-                        if (next_i >= 0 and
-                            next_i < rows) and (
-                            next_j >= 0 and
-                                next_j < cols) and self.grid[
-                                next_i][next_j] == 1:
+                        num = np.random.choice([0, 1], 1,
+                                               p=[1 - p, p])
+
+                        if num > 0:
 
                             queue.append([next_i, next_j])
                             self.grid[next_i][next_j] = 2
@@ -207,11 +208,12 @@ def temperature_map(n):
     ygrid = np.linspace(-5, 5, n)
     x, y = np.meshgrid(xgrid, ygrid)  # Create mesh grid
 
-    z = np.abs(np.exp(-(1/2)*(x**2 + y**2)))
+    z = np.abs(np.sin(x)*np.cos(y) + 1)
 
-    plt.imshow(z, cmap="coolwarm", interpolation="nearest")
+    normz = z / np.max(z)
+    plt.imshow(normz, cmap="coolwarm", interpolation="nearest")
 
-    return z
+    return normz
 
 
 if __name__ == "__main__":
