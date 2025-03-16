@@ -73,7 +73,7 @@ class FireModel:
 
         for i in range(rows):
             for j in range(cols):
-                if self.grid[i][j] in [1, 4]:
+                if self.grid[i][j] == 1:
                     land += 1
                 if self.grid[i][j] == 2:
                     queue.append([i, j])
@@ -98,21 +98,14 @@ class FireModel:
                             next_j < cols) and self.grid[
                             next_i][next_j] == 1:
 
-                        initial = 0.25
-                        temp = max(self.temperatures[next_i][next_j], 73)
+                        initial = 0.4
 
-                        p = min(initial*(1 + 0.5*self.wind_affect(
+                        p = initial*(1 + self.wind_affect(
                                     direction)
-                                    )*np.exp(0.2*(temp - 73)), 0.9)
-
-                        # if self.grid[next_i][next_j] == 4:
-                        #     p = min(1, 1.5*p)
+                                    )*self.temperatures[next_i][next_j]
 
                         num = np.random.choice([0, 1], 1,
                                                p=[1 - p, p])
-
-                        if self.grid[next_i][next_j] == 4:
-                            num = 1
 
                         if num > 0:
 
@@ -126,12 +119,11 @@ class FireModel:
 
     def animate_spread(self, grid_states: List[np.ndarray], save_file: bool):
         """Animate fire spread based on grid snapshots."""
-        cmap = mpl.colors.ListedColormap(['blue',
-                                          'white', 'red', 'orange', 'brown'])
+        cmap = mpl.colors.ListedColormap(['blue', 'white', 'red', 'orange'])
 
         fig, ax = plt.subplots()
 
-        image = ax.imshow(self.grid, cmap=cmap, vmin=0, vmax=4)
+        image = ax.imshow(self.grid, cmap=cmap, vmin=0, vmax=3)
 
         ax.set_xticks([])
         ax.set_yticks([])
@@ -174,7 +166,7 @@ def sample_objects(n):
     grid_df['lambda'] = grid_df['r']  # Intensity function
 
     # Compute expectation
-    cell_area = (10 / n) ** 2  # Area of each grid cell
+    cell_area = (6 / n) ** 2  # Area of each grid cell
     expected_total = np.sum(grid_df['lambda'] * cell_area)
 
     # Sample the actual number of points from a Poisson distribution
@@ -205,11 +197,6 @@ def fire_heatmap(states):
 
     normalised_arr = sum_array/np.max(sum_array)
 
-    fig, ax = plt.subplots()
-
-    fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(0, 1), cmap='coolwarm'),
-             ax=ax, orientation='vertical', label='Fire Spread Probability')
-
     plt.imshow(normalised_arr, cmap="coolwarm", interpolation="nearest")
 
     plt.show()
@@ -221,39 +208,24 @@ def temperature_map(n):
     ygrid = np.linspace(-5, 5, n)
     x, y = np.meshgrid(xgrid, ygrid)  # Create mesh grid
 
-    # z = np.abs(np.sin(0.5* np.pi*x)*np.sin(0.5* np.pi*y) + 2*np.cos(1/6 * np.pi*y*x))
-    z = 600*np.exp(-(1/2)*(x**2 + y**2)/9)
+    z = np.abs(np.sin(x)*np.cos(y) + 1)
+
     normz = z / np.max(z)
     plt.imshow(normz, cmap="coolwarm", interpolation="nearest")
 
     return normz
 
 
-def generate_boundary(n, grid):
-    """Generate spread boundary."""
-    x_c, y_c = n // 2, n // 2
-    radius = 60
-
-    y, x = np.ogrid[:n, :n]
-    u = x - x_c
-    v = y - y_c
-    mask = (u/1.2) ** 2 + (v) ** 2 > (radius)**2
-    mask2 = (u/1.2) ** 2 + (v) ** 2 < (radius)**2 + 300
-    grid[mask == mask2] = 0
-
-
 if __name__ == "__main__":
 
-    n = 200
+    n = 100
 
     grid = np.ones((n, n))
 
     temperatures = temperature_map(n)
 
     for i in sample_objects(n):
-        grid[i[0]][i[1]] = 4
-
-    # generate_boundary(n, grid)
+        grid[i[0]][i[1]] = 0
 
     grid[n//2][n//2] = 2
     test = FireModel(grid, temperatures, [0, [1, 1]])
@@ -262,15 +234,11 @@ if __name__ == "__main__":
     test.animate_spread(test.grid_states, False)
 
     states = []
-    for i in range(100):
-        test = FireModel(grid, temperatures, [7.38, [-1, -1]])
+    for i in range(10):
+        test = FireModel(grid, temperatures, [100, [1, 1]])
         test.model_spread()
 
         states.append(test.get_final_state())
 
     fire_heatmap(states)
 # Also need to add temperature, fuel, accurate locations for trees/ rivers.
-
-# DATE,PRECIPITATION,MAX_TEMP,MIN_TEMP,AVG_WIND_SPEED,FIRE_START_DAY,YEAR,TEMP_RANGE,WIND_TEMP_RATIO,MONTH,SEASON,LAGGED_PRECIPITATION,LAGGED_AVG_WIND_SPEED,DAY_OF_YEAR
-
-#1984-09-10,0.02,83.0,73.0,7.38,True,1984,10.0,0.08891566265060241,9,Fall,0.02,7.318571428571429,254
